@@ -2,6 +2,26 @@ import { QUOTES } from './data.js';
 
 const $ = (sel) => document.querySelector(sel);
 
+const REPO_BASE = '/100-quotes-of-cs';
+
+function getBasePath() {
+  return location.pathname === REPO_BASE || location.pathname.startsWith(`${REPO_BASE}/`)
+    ? REPO_BASE
+    : '';
+}
+
+function getRoutePath() {
+  const base = getBasePath();
+  const withoutBase = base ? location.pathname.slice(base.length) : location.pathname;
+  return withoutBase.replace(/^\//, '').replace(/\/$/, '');
+}
+
+function routeUrl(path = '') {
+  const base = getBasePath();
+  const clean = String(path).replace(/^\//, '');
+  return `${base}/${clean}`.replace(/\/$/, '/') || '/';
+}
+
 const els = {
   home: $('#home-view'),
   archive: $('#archive-view'),
@@ -11,16 +31,10 @@ const els = {
   quoteYear: $('#quote-year'),
   quoteCategory: $('#quote-category'),
   favBtn: $('#fav-btn'),
-  copyBtn: $('#copy-btn'),
-  shareBtn: $('#share-btn'),
   progressBar: $('#progress-bar'),
   progressLabel: $('#progress-label'),
   themeBtn: $('#theme-btn'),
-  randomTop: $('#random-top'),
-  randomBottom: $('#random-bottom'),
-  archiveLink: $('#archive-link'),
   homeLink: $('#home-link'),
-  prevBtn: $('#prev-btn'),
   nextBtn: $('#next-btn'),
   searchBox: $('#search-box'),
   categoryFilters: $('#category-filters'),
@@ -88,23 +102,22 @@ function updateStreak() {
 }
 
 function renderQuote(q, { pushHistory = true } = {}) {
+  if (!q) return;
+
   currentYear = q.year;
-  els.quoteText.classList.remove('visible');
-  setTimeout(() => {
-    els.quoteText.textContent = `"${q.quote}"`;
-    els.quoteAuthor.textContent = q.author;
-    const bits = [q.source, String(q.year)].filter(Boolean);
-    els.quoteSource.textContent = bits.join(' • ');
-    els.quoteCategory.textContent = q.category || '';
-    const idx = QUOTES.findIndex(x => x.year === q.year);
-    els.progressLabel.textContent = `Quote ${idx + 1} of ${QUOTES.length}`;
-    els.progressBar.style.width = `${((idx + 1) / QUOTES.length) * 100}%`;
-    updateFavButton();
-    els.quoteText.classList.add('visible');
-  }, 120);
+  els.quoteText.textContent = `"${q.quote}"`;
+  els.quoteAuthor.textContent = q.author;
+  const bits = [q.source, String(q.year)].filter(Boolean);
+  els.quoteSource.textContent = bits.join(' • ');
+  els.quoteCategory.textContent = q.category || '';
+  const idx = QUOTES.findIndex(x => x.year === q.year);
+  els.progressLabel.textContent = `Quote ${idx + 1} of ${QUOTES.length}`;
+  els.progressBar.style.width = `${((idx + 1) / QUOTES.length) * 100}%`;
+  updateFavButton();
+  els.quoteText.classList.add('visible');
 
   if (pushHistory) {
-    history.pushState({ year: q.year }, '', `/${q.year}`);
+    history.pushState({ year: q.year }, '', routeUrl(q.year));
   }
 }
 
@@ -117,7 +130,7 @@ function showRandom() {
 
 function showNext() {
   const idx = QUOTES.findIndex(x => x.year === currentYear);
-  const next = QUOTES[(idx + 1) % QUOTES.length];
+  const next = QUOTES[((idx >= 0 ? idx : todaysFeaturedIndex()) + 1) % QUOTES.length];
   renderQuote(next);
 }
 
@@ -139,30 +152,7 @@ function updateFavButton() {
   const favs = loadJSON(STORAGE.favorites, []);
   const active = favs.includes(currentYear);
   els.favBtn.classList.toggle('active', active);
-  els.favBtn.textContent = active ? '★ Favorited' : '☆ Favorite';
-}
-
-function copyQuote() {
-  const q = getQuoteByYear(currentYear);
-  const text = `"${q.quote}" — ${q.author}, ${q.year}`;
-  navigator.clipboard?.writeText(text).then(() => flashButton(els.copyBtn, 'Copied'));
-}
-
-function shareQuote() {
-  const q = getQuoteByYear(currentYear);
-  const text = `"${q.quote}" — ${q.author}, ${q.year}`;
-  const url = `${location.origin}/${q.year}`;
-  if (navigator.share) {
-    navigator.share({ text, url }).catch(() => {});
-  } else {
-    navigator.clipboard?.writeText(`${text}\n${url}`).then(() => flashButton(els.shareBtn, 'Link Copied'));
-  }
-}
-
-function flashButton(btn, msg) {
-  const orig = btn.textContent;
-  btn.textContent = msg;
-  setTimeout(() => { btn.textContent = orig; }, 1400);
+  els.favBtn.textContent = active ? 'Saved' : 'Save';
 }
 
 function toggleTheme() {
@@ -178,10 +168,6 @@ function applyStoredTheme() {
   if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
 }
 
-function toggleFullscreen() {
-  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
-  else document.exitFullscreen?.();
-}
 
 /* ---------- ARCHIVE ---------- */
 const CATEGORIES = [...new Set(QUOTES.map(q => q.category).filter(Boolean))].sort();
@@ -254,12 +240,12 @@ function goHome() {
 function goArchive() {
   els.home.classList.add('hidden');
   els.archive.classList.remove('hidden');
-  history.pushState({}, '', '/archive');
+  history.pushState({}, '', routeUrl('archive'));
 }
 
 /* ---------- ROUTING ---------- */
 function initFromLocation() {
-  const path = location.pathname.replace(/^\//, '');
+  const path = getRoutePath();
   if (path === 'archive') {
     goArchive();
     return;
@@ -274,7 +260,7 @@ function initFromLocation() {
 }
 
 window.addEventListener('popstate', () => {
-  const path = location.pathname.replace(/^\//, '');
+  const path = getRoutePath();
   if (path === 'archive') { goArchive(); return; }
   const asYear = Number(path);
   const q = !Number.isNaN(asYear) ? getQuoteByYear(asYear) : null;
@@ -283,16 +269,10 @@ window.addEventListener('popstate', () => {
 });
 
 /* ---------- EVENTS ---------- */
-els.randomTop.addEventListener('click', showRandom);
-els.randomBottom.addEventListener('click', showRandom);
 els.nextBtn.addEventListener('click', showNext);
-els.prevBtn.addEventListener('click', showPrev);
 els.favBtn.addEventListener('click', toggleFavorite);
-els.copyBtn.addEventListener('click', copyQuote);
-els.shareBtn.addEventListener('click', shareQuote);
 els.themeBtn.addEventListener('click', toggleTheme);
-els.archiveLink.addEventListener('click', (e) => { e.preventDefault(); goArchive(); renderYearList(); });
-els.homeLink.addEventListener('click', (e) => { e.preventDefault(); goHome(); });
+els.homeLink.addEventListener('click', (e) => { e.preventDefault(); goHome(); history.pushState({}, '', routeUrl()); });
 els.searchBox.addEventListener('input', renderYearList);
 
 document.addEventListener('keydown', (e) => {
@@ -300,15 +280,8 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') els.searchBox.blur();
     return;
   }
-  switch (e.key) {
-    case 'ArrowLeft': showPrev(); break;
-    case 'ArrowRight': showNext(); break;
-    case ' ': e.preventDefault(); showRandom(); break;
-    case 'f': case 'F': toggleFullscreen(); break;
-    case 't': case 'T': toggleTheme(); break;
-    case 'c': case 'C': copyQuote(); break;
-    case 's': case 'S': shareQuote(); break;
-  }
+
+  if (e.key === 'ArrowRight') showNext();
 });
 
 /* ---------- INIT ---------- */
