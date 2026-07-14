@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100 Years · 100 Quotes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <a href="/" id="home-link" class="brand">100 Years<small>100 Quotes</small></a>
+    <nav class="nav-right">
+      <button id="theme-btn" title="Toggle theme (T)">☀</button>
+      <button id="random-top" title="Random (Space)">Random</button>
+      <a href="/archive" id="archive-link">Archive</a>
+    </nav>
+  </header>
+
+  <main id="home-view" class="view">
+    <div class="quote-mark">"</div>
+    <p id="quote-text" class="quote-text"></p>
+    <div class="divider"></div>
+    <p id="quote-author" class="quote-source"></p>
+    <p id="quote-source" class="quote-meta"></p>
+    <span id="quote-category" class="quote-category"></span>
+
+    <div class="action-row">
+      <button id="fav-btn">☆ Favorite</button>
+      <button id="copy-btn" title="Copy (C)">Copy</button>
+      <button id="share-btn" title="Share (S)">Share</button>
+    </div>
+  </main>
+
+  <section id="archive-view" class="archive-view hidden">
+    <div class="archive-header">
+      <h1 class="archive-title">Archive</h1>
+      <input id="search-box" class="search-box" type="text" placeholder="Search by author, year, category, or keyword…">
+      <div id="category-filters" class="category-filters"></div>
+    </div>
+    <div id="year-list" class="year-list"></div>
+  </section>
+
+  <footer class="bottombar">
+    <button id="prev-btn" title="Previous (←)">← Previous</button>
+    <button id="random-bottom" title="Random (Space)">Random</button>
+    <button id="next-btn" title="Next (→)">Next →</button>
+  </footer>
+
+</div>
+
+<div id="progress-bar" class="progress-wrap"></div>
+<span id="progress-label" class="progress-label"></span>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
