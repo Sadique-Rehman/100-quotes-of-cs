@@ -2,6 +2,26 @@ import { QUOTES } from './data.js';
 
 const $ = (sel) => document.querySelector(sel);
 
+const REPO_BASE = '/100-quotes-of-cs';
+
+function getBasePath() {
+  return location.pathname === REPO_BASE || location.pathname.startsWith(`${REPO_BASE}/`)
+    ? REPO_BASE
+    : '';
+}
+
+function getRoutePath() {
+  const base = getBasePath();
+  const withoutBase = base ? location.pathname.slice(base.length) : location.pathname;
+  return withoutBase.replace(/^\//, '').replace(/\/$/, '');
+}
+
+function routeUrl(path = '') {
+  const base = getBasePath();
+  const clean = String(path).replace(/^\//, '');
+  return `${base}/${clean}`.replace(/\/$/, '/') || '/';
+}
+
 const els = {
   home: $('#home-view'),
   archive: $('#archive-view'),
@@ -82,23 +102,22 @@ function updateStreak() {
 }
 
 function renderQuote(q, { pushHistory = true } = {}) {
+  if (!q) return;
+
   currentYear = q.year;
-  els.quoteText.classList.remove('visible');
-  setTimeout(() => {
-    els.quoteText.textContent = `"${q.quote}"`;
-    els.quoteAuthor.textContent = q.author;
-    const bits = [q.source, String(q.year)].filter(Boolean);
-    els.quoteSource.textContent = bits.join(' • ');
-    els.quoteCategory.textContent = q.category || '';
-    const idx = QUOTES.findIndex(x => x.year === q.year);
-    els.progressLabel.textContent = `Quote ${idx + 1} of ${QUOTES.length}`;
-    els.progressBar.style.width = `${((idx + 1) / QUOTES.length) * 100}%`;
-    updateFavButton();
-    els.quoteText.classList.add('visible');
-  }, 120);
+  els.quoteText.textContent = `"${q.quote}"`;
+  els.quoteAuthor.textContent = q.author;
+  const bits = [q.source, String(q.year)].filter(Boolean);
+  els.quoteSource.textContent = bits.join(' • ');
+  els.quoteCategory.textContent = q.category || '';
+  const idx = QUOTES.findIndex(x => x.year === q.year);
+  els.progressLabel.textContent = `Quote ${idx + 1} of ${QUOTES.length}`;
+  els.progressBar.style.width = `${((idx + 1) / QUOTES.length) * 100}%`;
+  updateFavButton();
+  els.quoteText.classList.add('visible');
 
   if (pushHistory) {
-    history.pushState({ year: q.year }, '', `/${q.year}`);
+    history.pushState({ year: q.year }, '', routeUrl(q.year));
   }
 }
 
@@ -111,7 +130,7 @@ function showRandom() {
 
 function showNext() {
   const idx = QUOTES.findIndex(x => x.year === currentYear);
-  const next = QUOTES[(idx + 1) % QUOTES.length];
+  const next = QUOTES[((idx >= 0 ? idx : todaysFeaturedIndex()) + 1) % QUOTES.length];
   renderQuote(next);
 }
 
@@ -136,29 +155,6 @@ function updateFavButton() {
   els.favBtn.textContent = active ? 'Saved' : 'Save';
 }
 
-function copyQuote() {
-  const q = getQuoteByYear(currentYear);
-  const text = `"${q.quote}" — ${q.author}, ${q.year}`;
-  navigator.clipboard?.writeText(text).then(() => flashButton(els.copyBtn, 'Copied'));
-}
-
-function shareQuote() {
-  const q = getQuoteByYear(currentYear);
-  const text = `"${q.quote}" — ${q.author}, ${q.year}`;
-  const url = `${location.origin}/${q.year}`;
-  if (navigator.share) {
-    navigator.share({ text, url }).catch(() => {});
-  } else {
-    navigator.clipboard?.writeText(`${text}\n${url}`).then(() => flashButton(els.shareBtn, 'Link Copied'));
-  }
-}
-
-function flashButton(btn, msg) {
-  const orig = btn.textContent;
-  btn.textContent = msg;
-  setTimeout(() => { btn.textContent = orig; }, 1400);
-}
-
 function toggleTheme() {
   const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   const next = cur === 'light' ? 'dark' : 'light';
@@ -172,10 +168,6 @@ function applyStoredTheme() {
   if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
 }
 
-function toggleFullscreen() {
-  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
-  else document.exitFullscreen?.();
-}
 
 /* ---------- ARCHIVE ---------- */
 const CATEGORIES = [...new Set(QUOTES.map(q => q.category).filter(Boolean))].sort();
@@ -248,12 +240,12 @@ function goHome() {
 function goArchive() {
   els.home.classList.add('hidden');
   els.archive.classList.remove('hidden');
-  history.pushState({}, '', '/archive');
+  history.pushState({}, '', routeUrl('archive'));
 }
 
 /* ---------- ROUTING ---------- */
 function initFromLocation() {
-  const path = location.pathname.replace(/^\//, '');
+  const path = getRoutePath();
   if (path === 'archive') {
     goArchive();
     return;
@@ -268,7 +260,7 @@ function initFromLocation() {
 }
 
 window.addEventListener('popstate', () => {
-  const path = location.pathname.replace(/^\//, '');
+  const path = getRoutePath();
   if (path === 'archive') { goArchive(); return; }
   const asYear = Number(path);
   const q = !Number.isNaN(asYear) ? getQuoteByYear(asYear) : null;
@@ -280,7 +272,7 @@ window.addEventListener('popstate', () => {
 els.nextBtn.addEventListener('click', showNext);
 els.favBtn.addEventListener('click', toggleFavorite);
 els.themeBtn.addEventListener('click', toggleTheme);
-els.homeLink.addEventListener('click', (e) => { e.preventDefault(); goHome(); });
+els.homeLink.addEventListener('click', (e) => { e.preventDefault(); goHome(); history.pushState({}, '', routeUrl()); });
 els.searchBox.addEventListener('input', renderYearList);
 
 document.addEventListener('keydown', (e) => {
