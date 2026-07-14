@@ -11,16 +11,10 @@ const els = {
   quoteYear: $('#quote-year'),
   quoteCategory: $('#quote-category'),
   favBtn: $('#fav-btn'),
-  copyBtn: $('#copy-btn'),
-  shareBtn: $('#share-btn'),
   progressBar: $('#progress-bar'),
   progressLabel: $('#progress-label'),
   themeBtn: $('#theme-btn'),
-  randomTop: $('#random-top'),
-  randomBottom: $('#random-bottom'),
-  archiveLink: $('#archive-link'),
   homeLink: $('#home-link'),
-  prevBtn: $('#prev-btn'),
   nextBtn: $('#next-btn'),
   searchBox: $('#search-box'),
   categoryFilters: $('#category-filters'),
@@ -139,7 +133,7 @@ function updateFavButton() {
   const favs = loadJSON(STORAGE.favorites, []);
   const active = favs.includes(currentYear);
   els.favBtn.classList.toggle('active', active);
-  els.favBtn.textContent = active ? '★ Favorited' : '☆ Favorite';
+  els.favBtn.textContent = active ? 'Saved' : 'Save';
 }
 
 function copyQuote() {
@@ -283,15 +277,9 @@ window.addEventListener('popstate', () => {
 });
 
 /* ---------- EVENTS ---------- */
-els.randomTop.addEventListener('click', showRandom);
-els.randomBottom.addEventListener('click', showRandom);
 els.nextBtn.addEventListener('click', showNext);
-els.prevBtn.addEventListener('click', showPrev);
 els.favBtn.addEventListener('click', toggleFavorite);
-els.copyBtn.addEventListener('click', copyQuote);
-els.shareBtn.addEventListener('click', shareQuote);
 els.themeBtn.addEventListener('click', toggleTheme);
-els.archiveLink.addEventListener('click', (e) => { e.preventDefault(); goArchive(); renderYearList(); });
 els.homeLink.addEventListener('click', (e) => { e.preventDefault(); goHome(); });
 els.searchBox.addEventListener('input', renderYearList);
 
@@ -300,15 +288,8 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') els.searchBox.blur();
     return;
   }
-  switch (e.key) {
-    case 'ArrowLeft': showPrev(); break;
-    case 'ArrowRight': showNext(); break;
-    case ' ': e.preventDefault(); showRandom(); break;
-    case 'f': case 'F': toggleFullscreen(); break;
-    case 't': case 'T': toggleTheme(); break;
-    case 'c': case 'C': copyQuote(); break;
-    case 's': case 'S': shareQuote(); break;
-  }
+
+  if (e.key === 'ArrowRight') showNext();
 });
 
 /* ---------- INIT ---------- */

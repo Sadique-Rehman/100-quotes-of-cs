@@ -12,11 +12,11 @@
 <div class="app">
 
   <header class="topbar">
-    <a href="/" id="home-link" class="brand">100 Years<small>100 Quotes</small></a>
-    <nav class="nav-right">
-      <button id="theme-btn" title="Toggle theme (T)">☀</button>
-      <button id="random-top" title="Random (Space)">Random</button>
-      <a href="/archive" id="archive-link">Archive</a>
+    <a href="/" id="home-link" class="brand"><span class="brand-icon" aria-hidden="true">▣</span><span>100 Years<small>100 Quotes</small></span></a>
+    <nav class="nav-right" aria-label="Quote controls">
+      <button id="theme-btn" class="icon-button" title="Toggle theme">☀</button>
+      <button id="fav-btn" class="nav-action">Save</button>
+      <button id="next-btn" class="nav-action">Next Quote</button>
     </nav>
   </header>
 
@@ -28,11 +28,6 @@
     <p id="quote-source" class="quote-meta"></p>
     <span id="quote-category" class="quote-category"></span>
 
-    <div class="action-row">
-      <button id="fav-btn">☆ Favorite</button>
-      <button id="copy-btn" title="Copy (C)">Copy</button>
-      <button id="share-btn" title="Share (S)">Share</button>
-    </div>
   </main>
 
   <section id="archive-view" class="archive-view hidden">
@@ -44,11 +39,6 @@
     <div id="year-list" class="year-list"></div>
   </section>
 
-  <footer class="bottombar">
-    <button id="prev-btn" title="Previous (←)">← Previous</button>
-    <button id="random-bottom" title="Random (Space)">Random</button>
-    <button id="next-btn" title="Next (→)">Next →</button>
-  </footer>
 
 </div>
 
